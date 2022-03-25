@@ -32,3 +32,29 @@
 > pip install graphviz
 
 """
+import yaml
+import draw_network_graph
+
+def transform_topology(file_name):
+    """
+    Transfor file to topology file
+    :param file_name: name of the yaml file
+    :return: dictionary
+    """
+    with open(file_name) as f:
+        data = yaml.safe_load(f)
+    connect_dict = {}
+    clear_dict = {}
+    for key in data.keys():
+        for port in data[key].keys():
+            local_port = (key, port)
+            remote_port = tuple(data[key][port].items())[0]
+            connect_dict[local_port] = remote_port
+    for key, value in connect_dict.items():
+        if key not in clear_dict.values():
+            clear_dict[key] = value
+    return clear_dict
+
+if __name__ == "__main__":
+    topology = transform_topology('topology.yaml')
+    draw_network_graph.draw_topology(topology)
