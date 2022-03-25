@@ -38,10 +38,57 @@
 
 Кроме того, создан список заголовков (headers), который должен быть записан в CSV.
 """
-
+import re
+import csv
 import glob
 
 sh_version_files = glob.glob("sh_vers*")
 # print(sh_version_files)
 
 headers = ["hostname", "ios", "image", "uptime"]
+
+def parse_sh_version(output):
+    """
+    Parsing show version output
+    :param output: string with output from the device
+    :return: tuple with ios, image, uptime
+    """
+    image_regex = r'file is \"(\S+)\"'
+    ios_regex = "IOS.*Version (\S+),"
+    uptime_regex = r'uptime is (.*)'
+    for line in output.splitlines():
+        ios_match = re.search(ios_regex, line)
+        if ios_match:
+            ios = ios_match.group(1)
+        image_match = re.search(image_regex, line)
+        if image_match:
+            image = image_match.group(1)
+        uptime_match = re.search(uptime_regex, line)
+        if uptime_match:
+            uptime = uptime_match.group(1)
+    version = (ios, image, uptime)
+    return version
+
+def write_inventory_to_csv(data_filenames, csv_filename):
+    """
+    Write inventory information to csv
+    :param data_filenames: names of the files
+    :param csv_filename: name of cvs file to write out
+    :return: None
+    """
+    out = []
+    headers = ["hostname", "ios", "image", "uptime"]
+    out.append(headers)
+    for file in data_filenames:
+        hostname = file.replace('sh_version_', '').replace('.txt', '')
+        with open(file) as f:
+            data = f.read()
+            version = list(parse_sh_version(data))
+            version.insert(0, hostname)
+            out.append(version)
+    with open(csv_filename, 'w', newline='') as o:
+        writer = csv.writer(o)
+        writer.writerows(out)
+
+if __name__ == "__main__":
+    write_inventory_to_csv(sh_version_files, 'task_17_2.csv')

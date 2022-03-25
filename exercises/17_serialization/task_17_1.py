@@ -28,3 +28,32 @@ sw3,00:E9:22:11:A6:50,100.1.1.7,3,FastEthernet0/21
 Первый столбец в csv файле имя коммутатора надо получить из имени файла, остальные - из содержимого в файлах.
 
 """
+import csv
+
+
+def write_dhcp_snooping_to_csv(filenames, output):
+    """
+    Convert text output files of dhcp snooping on cisco ios to csv file
+    :param filenames: names of files with output
+    :param output: csv file name
+    :return: None
+    """
+    out = []
+    header = ['switch','mac','ip','vlan','interface']
+    out.append(header)
+    for file in filenames:
+        switch = file.replace('_dhcp_snooping.txt', '')
+        with open(file) as f:
+            data = f.readlines()
+            for line in data:
+                if 'dhcp' in line:
+                    record = line.strip().split()
+                    mac, ip, vlan, interface = record[0], record[1], record[4], record[5]
+                    out.append([switch, mac, ip, vlan, interface])
+    with open(output, 'w', newline='') as o:
+        writer = csv.writer(o)
+        writer.writerows(out)
+
+if __name__ == "__main__":
+    write_dhcp_snooping_to_csv(['sw1_dhcp_snooping.txt', 'sw2_dhcp_snooping.txt', 'sw3_dhcp_snooping.txt'],
+                               'output.csv')
