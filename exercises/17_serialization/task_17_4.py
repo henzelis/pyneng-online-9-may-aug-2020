@@ -35,7 +35,7 @@ C-3PO,c3po@gmail.com,16/12/2019 17:24
 Функцию convert_datetimestr_to_datetime использовать не обязательно.
 
 """
-
+import csv
 import datetime
 
 
@@ -44,3 +44,32 @@ def convert_datetimestr_to_datetime(datetime_str):
     Конвертирует строку с датой в формате 11/10/2019 14:05 в объект datetime.
     """
     return datetime.datetime.strptime(datetime_str, "%d/%m/%Y %H:%M")
+
+def write_last_log_to_csv(old_csv_file, clear_csv_file):
+    """
+    Put only fresh logs from one csv file to the other
+    :param old_csv_file: Old csv file to analize
+    :param clear_csv_file: Celar cvs file to write
+    :return: None
+    """
+    clear_mail_log = []
+    with open(old_csv_file) as f:
+        reader = csv.reader(f)
+        header = next(reader)
+        for row in reader:
+            clear_mail_log.append(row)
+        for line in clear_mail_log:
+            mail = line[1]
+            date = convert_datetimestr_to_datetime(line[2])
+            for line in clear_mail_log:
+                if mail == line[1] and date > convert_datetimestr_to_datetime(line[2]):
+                    line_index = clear_mail_log.index(line)
+                    clear_mail_log.pop(line_index)
+    clear_mail_log.insert(0, header)
+    with open(clear_csv_file, 'w', newline='') as f:
+        writer = csv.writer(f)
+        for row in clear_mail_log:
+            writer.writerow(row)
+
+if __name__ == "__main__":
+    write_last_log_to_csv('mail_log.csv', 'clear.mail_log.csv')
